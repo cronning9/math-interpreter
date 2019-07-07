@@ -72,18 +72,21 @@ impl Lexer {
     fn tokenize_identifier(&mut self, i: u64, first_char: char) -> Token {
         let mut output: String = first_char.to_string();
         let mut skip_chars: u8 = 1;
-        let mut next_char = self.chars[i as usize + 1];
 
-        while next_char.is_alphabetic() || next_char.is_digit(10) || next_char == '-' {
-            output.push(next_char);
+        if self.position != self.input.len() as u64 {
+            let mut next_char = self.chars[i as usize + 1];
 
-            skip_chars += 1;
-            let next_index = i as usize + skip_chars as usize;
-            if next_index >= self.chars.len() {
-                break;
+            while next_char.is_alphabetic() || next_char.is_digit(10) || next_char == '-' {
+                output.push(next_char);
+
+                skip_chars += 1;
+                let next_index = i as usize + skip_chars as usize;
+                if next_index >= self.chars.len() {
+                    break;
+                }
+
+                next_char = self.chars[next_index];
             }
-
-            next_char = self.chars[next_index];
         }
 
         self.skip_chars = output.len() as u8;
@@ -98,11 +101,14 @@ impl Lexer {
     }
 
     fn tokenize_number(&mut self, i: u64, first_char: char) -> Token {
+        println!("\nnew number incoming beginning with {}", first_char);
         // count the number of characters from i to the first whitespace char
         let mut index = (i + 1) as usize;
         let mut number_str = String::from(first_char.to_string());
 
         while let Some(c) = self.chars.get(index) {
+
+            println!("{}", c);
             if WHITESPACE_CHARS.contains(c) {
                 if *c == '\r' && self.chars[index + 1] == '\n' {
                     index += 2;
@@ -201,6 +207,8 @@ impl Lexer {
         let input: Rc<String> = self.input.clone();
         let mut chars = input.chars();
 
+        let mut in_carriage_return = false;
+
         self.line += 1;
         loop {
             if self.skip_chars > 0 {
@@ -211,16 +219,22 @@ impl Lexer {
                 self.skip_chars = 0;
                 continue;
             }
+
             match chars.next() {
                 Some(c) => {
                     if c == '\r' && self.chars[(self.position + 1) as usize] == '\n' {
+                        in_carriage_return = true;
                         self.position += 2;
                         self.column = 0;
-                        self.line = 1;
-                    } else if c == '\n' {
-                        self.position += 1;
-                        self.column = 0;
                         self.line += 1;
+                    } else if c == '\n' {
+                        if in_carriage_return == false {
+                            self.position += 1;
+                            self.column = 0;
+                            self.line += 1;
+                        } else {
+                            in_carriage_return = false;
+                        }
                     } else if c == ' ' {
                         self.position += 1;
                     } else {

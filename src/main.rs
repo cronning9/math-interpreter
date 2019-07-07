@@ -13,8 +13,6 @@ pub fn main() {
     let args: Vec<String> = env::args().collect();
     let mut input: String;
 
-    println!("input: {:?}", args);
-
     if args.len() < 2 || args.len() > 3 {
         println!("usage: lexer [--file] <filepath> | lexer <input>");
         return;
@@ -30,5 +28,5 @@ pub fn main() {
     let mut lexer = Lexer::new(input);
     let tokens = lexer.run();
 
-    println!("tokens: {:?}", tokens);
+    println!("tokens: {:#?}", tokens);
 }

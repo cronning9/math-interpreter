@@ -1,7 +1,7 @@
 use crate::fsm::StateRules;
 use std::fmt::Debug;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum NumberStates {
     Initial,
     Integer,
@@ -12,6 +12,7 @@ pub enum NumberStates {
     NumberWithExponent,
 }
 
+#[derive(Debug)]
 pub struct NumberStateRules;
 impl StateRules for NumberStateRules {
     type ReturnType = u32;
