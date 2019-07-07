@@ -13,7 +13,7 @@ use tokens::TokenType::*;
 use crate::fsm::FSM;
 use crate::number_state_rules::{NumberStateRules, NumberStates};
 
-const WHITESPACE_CHARS: [char; 3] = [' ', '\n', '\r'];
+const WHITESPACE_CHARS: [char; 4] = [' ', '\n', '\r', '\t'];
 
 #[derive(Debug)]
 pub struct Token {
@@ -49,7 +49,7 @@ impl Lexer {
             chars: v,
             position: 0,
             line: 0,
-            column: 0,
+            column: 1,
             skip_chars: 0,
         }
     }
@@ -89,7 +89,7 @@ impl Lexer {
             }
         }
 
-        self.skip_chars = output.len() as u8;
+        self.skip_chars = output.len() as u8 - 1;
         if output.is_empty() {
             panic!(
                 "An error has occurred. Currently parsing at line {}: {}",
@@ -106,7 +106,6 @@ impl Lexer {
         let mut number_str = String::from(first_char.to_string());
 
         while let Some(c) = self.chars.get(index) {
-
             if WHITESPACE_CHARS.contains(c) {
                 if *c == '\r' && self.chars[index + 1] == '\n' {
                     index += 2;
@@ -131,7 +130,7 @@ impl Lexer {
 
         match result {
             Some(value) => {
-                self.skip_chars = value.len() as u8;
+                self.skip_chars = value.len() as u8 - 1;
                 Token::new(Number(value), self.line, self.column)
             }
             None => panic!(
@@ -223,22 +222,27 @@ impl Lexer {
                     if c == '\r' && self.chars[(self.position + 1) as usize] == '\n' {
                         in_carriage_return = true;
                         self.position += 2;
-                        self.column = 0;
+                        self.column = 1;
                         self.line += 1;
                     } else if c == '\n' {
                         if in_carriage_return == false {
                             self.position += 1;
-                            self.column = 0;
+                            self.column = 1;
                             self.line += 1;
                         } else {
                             in_carriage_return = false;
                         }
-                    } else if c == ' ' {
-                        self.position += 1;
-                    } else {
+                    } else if c == ' ' || c == '\t' {
                         self.position += 1;
                         self.column += 1;
+                    } else {
+                        self.position += 1;
                         tokens.push(self.next_token(self.position - 1 as u64, c));
+                        if self.skip_chars > 0 {
+                            self.column += self.skip_chars as u32;
+                        } else {
+                            self.column += 1;
+                        }
                     }
                 }
                 None => {
