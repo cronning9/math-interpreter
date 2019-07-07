@@ -1,13 +1,12 @@
+use std::env;
+use std::fs;
+
 mod fsm;
 mod lexer;
 mod number_state_rules;
 mod tokens;
 
 use lexer::Lexer;
-
-use std::env;
-use std::fs;
-use std::str::Chars;
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
